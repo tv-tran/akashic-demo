@@ -1,0 +1,58 @@
+{
+	"width": 1280,
+	"height": 720,
+	"fps": 60,
+	"main": "./script/main.js",
+	"assets": {
+		"shot": {
+			"type": "image",
+			"width": 16,
+			"height": 16,
+			"path": "image/shot.png"
+		},
+		"dot": {
+			"type": "image",
+			"width": 64,
+			"height": 64,
+			"path": "image/dot.png"
+		},
+		"head": {
+			"type": "image",
+			"width": 64,
+			"height": 64,
+			"path": "image/head.png"
+		},
+		"food": {
+			"type": "image",
+			"width": 64,
+			"height": 64,
+			"path": "image/food.png"
+		},
+		"btn_play": {
+			"type": "image",
+			"width": 128,
+			"height": 48,
+			"path": "image/btn_play.png"
+		},
+		"se": {
+			"type": "audio",
+			"path": "audio/se",
+			"systemId": "sound",
+			"duration": 250
+		},
+		"main": {
+			"type": "script",
+			"path": "script/main.js",
+			"global": true
+		},
+		"player": {
+			"type": "script",
+			"path": "script/player.js",
+			"global": true
+		}
+	},
+	"moduleMainScripts": {},
+	"environment": {
+		"sandbox-runtime": "2"
+	}
+}
