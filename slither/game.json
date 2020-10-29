@@ -10,17 +10,71 @@
 			"height": 16,
 			"path": "image/shot.png"
 		},
-		"dot": {
+		"dot0": {
 			"type": "image",
 			"width": 64,
 			"height": 64,
 			"path": "image/dot.png"
 		},
-		"head": {
+		"dot1": {
 			"type": "image",
 			"width": 64,
 			"height": 64,
-			"path": "image/head.png"
+			"path": "image/dot1.png"
+		},
+		"dot2": {
+			"type": "image",
+			"width": 64,
+			"height": 64,
+			"path": "image/dot2.png"
+		},
+		"dot3": {
+			"type": "image",
+			"width": 64,
+			"height": 64,
+			"path": "image/dot3.png"
+		},
+		"dot4": {
+			"type": "image",
+			"width": 64,
+			"height": 64,
+			"path": "image/dot4.png"
+		},
+		"dot5": {
+			"type": "image",
+			"width": 64,
+			"height": 64,
+			"path": "image/dot5.png"
+		},
+		"dot6": {
+			"type": "image",
+			"width": 64,
+			"height": 64,
+			"path": "image/dot6.png"
+		},
+		"dot7": {
+			"type": "image",
+			"width": 64,
+			"height": 64,
+			"path": "image/dot7.png"
+		},
+		"dot8": {
+			"type": "image",
+			"width": 64,
+			"height": 64,
+			"path": "image/dot8.png"
+		},
+		"dot9": {
+			"type": "image",
+			"width": 64,
+			"height": 64,
+			"path": "image/dot9.png"
+		},
+		"face": {
+			"type": "image",
+			"width": 64,
+			"height": 64,
+			"path": "image/face.png"
 		},
 		"food": {
 			"type": "image",

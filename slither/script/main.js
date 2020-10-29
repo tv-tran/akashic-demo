@@ -6,81 +6,83 @@ function main(param) {
 
     var scene = new g.Scene({ 
         game: g.game,
-        assetIds: ["dot", "head", "food", "btn_play"]
+        assetIds: ["dot0", "dot1", "dot2", "dot3", "dot4", "dot5", "dot6", "dot7", "dot8", "dot9", "face", "food", "btn_play"]
      });
 
     scene.loaded.add(function () {
         console.log("scene loaded");
         new GameCore(scene);
 
-        var userColors = {}; // ユーザ別の色テーブル
+        // var userColors = {}; // ユーザ別の色テーブル
 
-        // ローカルエンティティで色切り替えボタン (緑)
-        var greenButton = new g.FilledRect({
-            scene: scene,
-            // local: true, // ローカルにする
-            x: 5,
-            y: 5,
-            width: 10,
-            height: 10,
-            cssColor: "green",
-            touchable: true,
-            opacity: 0.3
-        });
-        greenButton.pointUp.add(function (ev) {
-            // ローカルエンティティのUIの表示を変更
-            greenButton.opacity = 1;
-            greenButton.modified();
-            blueButton.opacity = 0.3; // 非選択状態のものは半透明に
-            blueButton.modified();
+        // // ローカルエンティティで色切り替えボタン (緑)
+        // var greenButton = new g.FilledRect({
+        //     scene: scene,
+        //     // local: true, // ローカルにする
+        //     x: 5,
+        //     y: 5,
+        //     width: 10,
+        //     height: 10,
+        //     cssColor: "green",
+        //     touchable: true,
+        //     opacity: 0.3
+        // });
+        // greenButton.pointUp.add(function (ev) {
+        //     // ローカルエンティティのUIの表示を変更
+        //     greenButton.opacity = 1;
+        //     greenButton.modified();
+        //     blueButton.opacity = 0.3; // 非選択状態のものは半透明に
+        //     blueButton.modified();
 
-            // 全員に自分の色変更イベントを送信 (後述)
-            g.game.raiseEvent(new g.MessageEvent({
-                color: "green"
-            }));
-        });
-        scene.append(greenButton);
+        //     // 全員に自分の色変更イベントを送信 (後述)
+        //     g.game.raiseEvent(new g.MessageEvent({
+        //         color: "green"
+        //     }));
+        // });
+        // scene.append(greenButton);
 
-        // ローカルエンティティ色切り替えボタン (青)
-        var blueButton = new g.FilledRect({
-            scene: scene,
-            // local: true, // ローカルエンティティ
-            x: 20,
-            y: 5,
-            width: 10,
-            height: 10,
-            cssColor: "blue",
-            touchable: true,
-            opacity: 0.3
-        });
-        blueButton.pointUp.add(function () {
-            // ローカルエンティティのUIの表示を変更
-            greenButton.opacity = 0.3; // 非選択状態のものは半透明に
-            greenButton.modified();
-            blueButton.opacity = 1;
-            blueButton.modified();
+        // // ローカルエンティティ色切り替えボタン (青)
+        // var blueButton = new g.FilledRect({
+        //     scene: scene,
+        //     // local: true, // ローカルエンティティ
+        //     x: 20,
+        //     y: 5,
+        //     width: 10,
+        //     height: 10,
+        //     cssColor: "blue",
+        //     touchable: true,
+        //     opacity: 0.3
+        // });
+        // blueButton.pointUp.add(function () {
+        //     // ローカルエンティティのUIの表示を変更
+        //     greenButton.opacity = 0.3; // 非選択状態のものは半透明に
+        //     greenButton.modified();
+        //     blueButton.opacity = 1;
+        //     blueButton.modified();
 
-            // 全員に自分の色変更イベントを送信 (後述)
-            g.game.raiseEvent(new g.MessageEvent({
-                color: "blue"
-            }));
-        });
-        scene.append(blueButton);
+        //     // 全員に自分の色変更イベントを送信 (後述)
+        //     g.game.raiseEvent(new g.MessageEvent({
+        //         color: "blue"
+        //     }));
+        // });
+        // scene.append(blueButton);
 
-        // (raiseEvent()で全プレイヤーに送信された)MessageEventを受け取る処理: 送信プレイヤーの色情報を更新する
-        scene.message.add(function (msg) {
-            // 関係ないイベントは無視して抜ける
-            if (!msg.data || !msg.data.color) return;
+        // // (raiseEvent()で全プレイヤーに送信された)MessageEventを受け取る処理: 送信プレイヤーの色情報を更新する
+        // scene.message.add(function (msg) {
+        //     // 関係ないイベントは無視して抜ける
+        //     if (!msg.data || !msg.data.color) return;
 
-            // イベントを送信したプレイヤーの色情報を更新する
-            userColors[msg.player.id] = msg.data.color;
-        });
+        //     // イベントを送信したプレイヤーの色情報を更新する
+        //     userColors[msg.player.id] = msg.data.color;
+        // });
     });
+
     g.game.pushScene(scene);
 }
 
 function GameCore(scene) {
     console.log("new GameCore");
+    var gameCore = this;
 
     this.start = () => {
         console.log("game start");
@@ -89,16 +91,16 @@ function GameCore(scene) {
         this.mapWidth = g.game.width * 3;
         this.mapHeight = g.game.height * 3;
 
-        this.playersID = [];
         this.players = {};
-        this.playersStartPosition = {};
+        this.playersID = [];
+        this.snakes = [];
         this.foods = [];
 
         // layer
         this.rootLayer = new g.E({
             scene: scene,
-            x: -(this.mapWidth - g.game.width) + (this.mapWidth - g.game.width) * Math.random(),
-            y: -(this.mapHeight - g.game.height) + (this.mapHeight - g.game.height) * Math.random(),
+            x: 0,
+            y: 0,
             parent: scene
         });
 
@@ -112,7 +114,7 @@ function GameCore(scene) {
             parent: this.rootLayer
         });
 
-        this.playerLayer = new g.E({
+        this.snakeLayer = new g.E({
             scene: scene,
             parent: this.rootLayer
         });
@@ -161,7 +163,7 @@ function GameCore(scene) {
             parent: this.map
         });
 
-        this.map.players = new g.E({
+        this.map.snakes = new g.E({
             scene: scene,
             parent: this.map
         });
@@ -171,8 +173,8 @@ function GameCore(scene) {
             cssColor: "white",
             width: g.game.width,
             height: g.game.height,
-            x: -this.rootLayer.x,
-            y: -this.rootLayer.y,
+            x: 0,
+            y: 0,
             opacity: .2,
             parent: this.map
         });
@@ -216,9 +218,29 @@ function GameCore(scene) {
             var player = this.players[ev.player.id];
             if (!player) return;
 
-            player.direction2.x = (ev.point.x) - (g.game.width/2);
-            player.direction2.y = (ev.point.y) - (g.game.height/2);
-            player.direction2.Normalize();
+            if (!player.playing) {
+                var position = {
+                    x: ev.point.x - g.game.width/2 + player.position.x,
+                    y: ev.point.y - g.game.height/2 + player.position.y
+                };
+
+                if (position.x > 0 && position.y > 0 && position.x < gameCore.mapWidth && position.y < gameCore.mapHeight) {
+                    this.CreateFood(position);
+                }
+
+                return;
+            }
+
+            var snake = player.snake;
+
+            if (g.game.age - player.lastTimeClick < 20) {
+                snake.fast = true;
+            }
+            player.lastTimeClick = g.game.age;
+
+            snake.direction2.x = (ev.point.x) - (g.game.width/2);
+            snake.direction2.y = (ev.point.y) - (g.game.height/2);
+            snake.direction2.Normalize();
         });
 
         scene.pointMoveCapture.add((ev) => {
@@ -229,11 +251,26 @@ function GameCore(scene) {
             }
 
             var player = this.players[ev.player.id];
-            if (!player) return;
+            if (!player || !player.playing) return;
 
-            player.direction2.x = (ev.point.x + ev.startDelta.x) - (g.game.width/2);
-            player.direction2.y = (ev.point.y + ev.startDelta.y) - (g.game.height/2);
-            player.direction2.Normalize();
+            var snake = player.snake;
+            snake.direction2.x = (ev.point.x + ev.startDelta.x) - (g.game.width/2);
+            snake.direction2.y = (ev.point.y + ev.startDelta.y) - (g.game.height/2);
+            snake.direction2.Normalize();
+        });
+
+        scene.pointUpCapture.add((ev) => {
+            // console.log("pointUpCapture", ev);
+            
+            if (ev.target != null) {
+                return;
+            }
+
+            var player = this.players[ev.player.id];
+            if (!player || !player.playing) return;
+
+            var snake = player.snake;
+            snake.fast = false;
         });
 
         scene.message.add((msg) => {
@@ -243,125 +280,131 @@ function GameCore(scene) {
             if (!playerId || !msg.data) return;
 
             //
-            if (!!msg.data.NewPlayerJoined) {
-                if (!this.playersID.includes(playerId)) {
-                    console.log("new player joined: player" + playerId);
-                    this.playersID.push(playerId);
-                    this.playersStartPosition[playerId] = msg.data.NewPlayerJoined.position;
+            if ("new_player_joined" === msg.data.key) {
+                if (!gameCore.playersID.includes(playerId)) {
+                    gameCore.playersID.push(playerId);
+                    console.log("new_player_joined: player" + playerId);
+
+                    var position = gameCore.RandomPlayerPosition();
+                    var player = new Player(scene, gameCore, playerId, position);
+                    gameCore.players[playerId] = player;
+
+                    if (g.game.selfId === playerId) {
+                        gameCore.CenterPlayer(position);
+                    }
                 }
             }
-
-            // #1 intersect player & food (high performance but not perfect)
-            // if (!!msg.data.AddNewDot) {
-            //     var player = this.players[msg.player.id];
-            //     if (!!player) {
-            //         player.AddNewDot();
-            //     }
-    
-            //     var food = this.foods[msg.data.foodIndex];
-            //     if (!!food && !food.eated) {
-            //         food.eated = true;
-            //         food.destroy();
-            //         // this.foods.splice(msg.data.foodIndex, 1);
-            //     }
-            // }
             
         });
 
         this.btnPlay.pointUp.add((ev) => {
             var playerId = ev.player.id;
-            if (!this.playersID.includes(playerId)) return;
-
-            if (!!this.players[playerId] && this.players[playerId].live) return;
-
-            var player = new Player(scene, this, this.playersStartPosition[playerId], playerId);
-            this.players[playerId] = player;
-        })
+            var player = gameCore.players[playerId];
+            if (!player) return;
+            player.Play();
+        });
 
         this.Join();
-    }
+    };
     
     this.update = () => {
-        var myPlayer = this.players[g.game.selfId];
-        if (!myPlayer) return;
+        var myPlayer = gameCore.players[g.game.selfId];
+        if (!myPlayer || !myPlayer.playing) return;
+        this.CenterPlayer(myPlayer.position);
+    };
 
-        // center myPlayer
-        this.rootLayer.x = g.game.width/2 - myPlayer.position.x;
-        this.rootLayer.y = g.game.height/2 - myPlayer.position.y;
-        this.rootLayer.modified();
+    this.CenterPlayer = (playerPosision) => {
+        gameCore.rootLayer.x = g.game.width/2 - playerPosision.x;
+        gameCore.rootLayer.y = g.game.height/2 - playerPosision.y;
+        gameCore.rootLayer.modified();
 
-        this.map.frame.x = -this.rootLayer.x;
-        this.map.frame.y = -this.rootLayer.y;
-        this.map.frame.modified();
-     
-        // #1 intersect player & food (high performance but not perfect)
-        // var head = myPlayer.entities[0];
-        // var i = this.foods.length;
-        // while (i--) {
-        //     var food = this.foods[i];
-        //     if (food.live && !food.eated && this.intersect(head, food.entity)) { 
-        //         food.live = false;
-
-        //         g.game.raiseEvent(new g.MessageEvent({
-        //             AddNewDot: true,
-        //             foodIndex: i
-        //         }));
-        //     } 
-        // }
-
+        gameCore.map.frame.x = -gameCore.rootLayer.x;
+        gameCore.map.frame.y = -gameCore.rootLayer.y;
+        gameCore.map.frame.modified();
     };
 
     this.Join = () => {
         console.log("player" + g.game.selfId + " join");
         g.game.raiseEvent(new g.MessageEvent({
-            NewPlayerJoined: {
-                position: {
-                    x: g.game.width/2-this.rootLayer.x, 
-                    y: g.game.height/2-this.rootLayer.y
-                }
-            }
+            key: "new_player_joined"
         }));
     };
 
     this.AddFoods = (num) => {
         for (var i = 0; i < num; i++) {
-            this.CreateFood(new Vector2(g.game.random.get(0, this.mapWidth), g.game.random.get(0, this.mapHeight)));
+            this.CreateFood(this.RandomFoodPosition());
         }
     };
 
     this.CreateFood = (position) => {
-        var food = new Food(scene, this, position);
-        this.foods.push(food);
-    }
-
-    this.intersect = (e1, e2) => {
-        var r1 = e1.width / 2;
-        var r2 = e2.width / 2;
-        var d = r1 + r2;
-        var distance = new Vector2(e2.x - e1.x, e2.y - e1.y).SqrMagnitude();
-        return distance <= d*d;
+        var food = new Food(scene, gameCore, position);
+        gameCore.foods.push(food);
     };
-    
+
+    this.RandomFoodPosition = () => {
+        return ({
+            x: g.game.random.get(0, gameCore.mapWidth),
+            y: g.game.random.get(0, gameCore.mapHeight)
+        });
+    };
+ 
+    this.RandomPlayerPosition = () => {
+        return ({
+            x: g.game.random.get(g.game.width/2, gameCore.mapWidth - g.game.width/2),
+            y: g.game.random.get(g.game.height/2, gameCore.mapHeight - g.game.height/2)
+        });
+    };
+   
     g.game.join.add(function(ev) {
         console.log("join", ev, g.game);
     });
 
-
     scene.update.add(this.update);
+
     this.start();
 }
 
-function Player(scene, gameCore, position, playerId) {
-    this.id = playerId;
-    // console.log(playerId);
+function Player(scene, gameCore, playerId, position) {
+    var player = this;
 
-    this.position = new Vector2(position.x, position.y);
+    this.id = playerId;
+    this.position = position;
+
+    this.playing = false;
+    this.replay = false;
+    this.snake = null;
+
+    this.lastTimeClick = 0;
+
+    this.Play = () => {
+        if (this.playing) return;
+        this.playing = true;
+
+        if (this.replay) {
+            this.position = gameCore.RandomPlayerPosition();
+        }
+        else {
+            this.replay = true;
+        }
+
+        this.snake = new Snake(scene, gameCore, player);
+        gameCore.snakes.push(this.snake);
+    };
+}
+
+function Snake(scene, gameCore, player) {
+    this.position = new Vector2(player.position.x, player.position.y);
     this.direction = new Vector2(1, 0).Normalize();
     this.direction2 = new Vector2(1, 0).Normalize();
     this.entities = [];
 
     this.dotSize = 32;
     this.distanceBetweenTwoDot = 16;
+
+    this.normalSpeed = 2;
+    this.fastSpeed = 4;
+    this.speed = 2;
+    this.fast = false;
 
     this.start = () => {
         this.live = true;
@@ -372,13 +415,13 @@ function Player(scene, gameCore, position, playerId) {
         this.head = null;
         this.lastDot = null;
         
-        this.dotImg = scene.assets["dot"];
-        this.headImg = scene.assets["head"];
+        this.dotImg = scene.assets["dot" + Math.round(g.game.random.get(0, 9))];
+        this.faceImg = scene.assets["face"];
 
         this.dotsGroup = new g.E({
             scene: scene,
             local: true,
-            parent: gameCore.playerLayer
+            parent: gameCore.snakeLayer
         });
 
         this.dotMap = new g.Sprite({
@@ -392,18 +435,19 @@ function Player(scene, gameCore, position, playerId) {
             anchorY: .5,
             x: this.position.x,
             y: this.position.y,
-            parent: gameCore.map.players
+            parent: gameCore.map.snakes
         });
 
         this.CreateEntities();
 
-    }
+    };
 
     this.update = () => {
         if (!this.live) return;
 
         // movement
-        var s = 2;
+        this.speed = this.fast ? this.fastSpeed : this.normalSpeed;
+        var s = this.speed;
 
         if (this.direction.x != this.direction2.x || this.direction.y != this.direction2.y) {
             var angle = Vector2.Angle(this.direction, this.direction2);
@@ -432,6 +476,8 @@ function Player(scene, gameCore, position, playerId) {
         this.position.x += delta.x;
         this.position.y += delta.y;
 
+        player.position = this.position;
+
         this.dotMap.x = this.position.x;
         this.dotMap.y = this.position.y;
         this.dotMap.modified();
@@ -458,44 +504,41 @@ function Player(scene, gameCore, position, playerId) {
             this.entities[i].modified();
         }
 
-        // #1 intersect player & food
+        // intersect with food
         var i = gameCore.foods.length;
         while (i--) {
             var food = gameCore.foods[i];
-            if (food.live && !food.eated && this.intersect(this.head, food.entity)) { 
+            if (!food.eated && this.intersect(this.head, food.entity)) { 
                 food.destroy();
-                gameCore.foods.splice(i, 1);
 
                 this.numFoodEated++;
                 this.AddNewDot();
             }
         }
 
-        // intersect player & other player
-        var i = gameCore.playersID.length;
-        while (i-- && this.live) {
-            var playerId = gameCore.playersID[i];
-            var otherPlayer = gameCore.players[playerId];
-            if (!otherPlayer || otherPlayer.death || otherPlayer === this) continue;
+        // intersect with snake
+        var i = gameCore.snakes.length;
+        while (i--) {
+            var snake = gameCore.snakes[i];
+            if (snake.death || snake === this) continue;
 
-            var j = otherPlayer.entities.length;
-            while (j-- && this.live) {
-                var entity = otherPlayer.entities[j];
+            var j = snake.entities.length;
+            while (j--) {
+                var entity = snake.entities[j];
                 if (this.intersect(entity, this.head)) {
                     this.live = false;
-                    scene.setTimeout(() => {
-                        this.Destroy();
-                    }, 0)
+                    this.DestroyInNextUpdate();
                     return;
                 }
             }
         }
 
-        //
+        // out of map
         if (this.position.x < 0 || this.position.x > gameCore.mapWidth || this.position.y < 0 || this.position.y > gameCore.mapHeight) {
-            this.Destroy();
+            this.live = false;
+            this.DestroyInNextUpdate();
         }
-    }
+    };
 
     this.CreateEntities = () => {
         var delta = new Vector2(-this.direction.x * this.distanceBetweenTwoDot, -this.direction.y * this.distanceBetweenTwoDot);
@@ -515,7 +558,7 @@ function Player(scene, gameCore, position, playerId) {
 
         this.head = this.entities[0];
         this.head.update.add(this.update);
-    }
+    };
 
     this.AddNewDot = () => {
         var dot1 = this.entities[this.entities.length - 2];
@@ -525,17 +568,15 @@ function Player(scene, gameCore, position, playerId) {
         var newPos = new Vector2(dot2.x + delta.x, dot2.y + delta.y);
         var newDot = this.CreateDot(newPos);
         this.entities.push(newDot);
-    }
+    };
    
     this.CreateDot = (position, isHead) => {
-        var img = !!isHead ? this.headImg : this.dotImg;
-
         var dot = new g.Sprite({
             scene: scene,
             local: true,
-            src: img,
-            srcWidth: img.width,
-            srcHeight: img.height,
+            src: this.dotImg,
+            srcWidth: this.dotImg.width,
+            srcHeight: this.dotImg.height,
             width: this.dotSize,
             height: this.dotSize,
             anchorX: .5,
@@ -545,28 +586,68 @@ function Player(scene, gameCore, position, playerId) {
             //parent: this.dotsGroup
         });
 
+        if (isHead) {
+            new g.Sprite({
+                scene: scene,
+                local: true,
+                src: this.faceImg,
+                srcWidth: this.faceImg.width,
+                srcHeight: this.faceImg.height,
+                width: dot.width,
+                height: dot.height,
+                anchorX: .5,
+                anchorY: .5,
+                x: dot.width/2,
+                y: dot.height/2,
+                parent: dot
+            });
+        }
+
         this.dotsGroup.insertBefore(dot, this.lastDot);
         this.lastDot = dot;
 
         return dot;
-    }
+    };
+
+    this.DestroyInNextUpdate = () => {
+        scene.setTimeout(() => {
+            this.Destroy();
+        }, 0);
+    };
 
     this.Destroy = () => {
         if (this.dotsGroup.destroyed()) return;
 
         //gameCore.AddFoods(this.numFoodEated);
         this.entities.forEach((entity) => {
-            gameCore.CreateFood(new Vector2(entity.x, entity.y));
+            gameCore.CreateFood({x: entity.x, y: entity.y});
         })
+        this.entities = [];
  
-        this.live = false;
-        this.death = true;
         this.dotsGroup.destroy();
         this.dotMap.destroy();
-        this.entities = [];
 
-        gameCore.players[this.id] = undefined;
-    }
+        this.live = false;
+        this.death = true;
+
+        var index = gameCore.snakes.indexOf(this);
+        if (index !== -1) gameCore.snakes.splice(index, 1);
+        player.playing = false;
+        player.snake = null;
+    };
+
+    this.Fast = () => {
+        this.fast = true;
+
+        if (!!this.fastTimeout) {
+            scene.clearTimeout(this.fastTimeout);
+        }
+
+        this.fastTimeout = scene.setTimeout(1, () => {
+            this.fast = false;
+            this.fastTimeout = undefined;
+        });
+    };
 
     this.intersect = (e1, e2) => {
         var r1 = e1.width / 2;
@@ -579,14 +660,13 @@ function Player(scene, gameCore, position, playerId) {
     this.start();
 }
 
-function Food(scene, gameCore, position, index) {
+function Food(scene, gameCore, position) {
     this.size = 16;
 
     this.start = () => {
-        this.live = true;
         this.eated = false;
 
-        this.position = position;
+        this.position = new Vector2(position.x, position.y);
         // console.log(this.position);
 
         this.img = scene.assets["food"];
@@ -608,20 +688,6 @@ function Food(scene, gameCore, position, index) {
             parent: gameCore.foodLayer
         });
 
-        // this.dotMap = new g.Sprite({
-        //     scene: scene,
-        //     src: this.img,
-        //     srcWidth: this.img.width,
-        //     srcHeight: this.img.height,
-        //     width: gameCore.mapHeight / 40,
-        //     height: gameCore.mapHeight / 40,
-        //     anchorX: .5,
-        //     anchorY: .5,
-        //     x: this.position.x,
-        //     y: this.position.y,
-        //     parent: gameCore.map.foods
-        // });
-
         this.dotMap = new g.FilledRect({
             scene: scene,
             cssColor: "orange",
@@ -636,11 +702,14 @@ function Food(scene, gameCore, position, index) {
     };
 
     this.destroy = () => {
-        if (this.entity.destroyed()) return; 
-        this.live = false;
-        this.eated = true;
+        if (this.entity.destroyed()) return;
         this.entity.destroy();
         this.dotMap.destroy();
+        
+        this.eated = true;
+
+        var index = gameCore.foods.indexOf(this);
+        if (index !== -1) gameCore.foods.splice(index, 1);
     };
 
     this.start();
@@ -654,15 +723,15 @@ function Vector2(x, y) {
         this.x = this.x/length; //assigning new value to x (dividing x by length of the vector)
         this.y = this.y/length; //assigning new value to y
         return this;
-    }
+    };
 
     this.Magnitude = () => {
         return Math.sqrt(this.SqrMagnitude());
-    }
+    };
 
     this.SqrMagnitude = () => {
         return this.x*this.x+this.y*this.y;
-    }
+    };
 
 }
 
