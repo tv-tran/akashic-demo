@@ -1,16 +1,20 @@
 import ChessBoard = require("./ChessBoard");
+import GameMode = require("./enum/GameMode");
+import GameStatus = require("./enum/GameStatus");
+import HighlightType = require("./enum/HighlightType");
 import PieceType = require("./enum/PieceType");
-import PlayerStatus = require("./enum/PlayerStatus");
 import TeamType = require("./enum/TeamType");
 import GameCore = require("./GameCore");
 import Cell = require("./interface/Cell");
 import Rules = require("./Rules");
+import Team = require("./Team");
 import ViewManager = require("./ViewManager");
 
 interface Props {
 	cell: Cell;
 	type: PieceType;
 	teamType: TeamType;
+	team: Team;
 }
 
 class Piece {
@@ -22,8 +26,11 @@ class Piece {
 	cell: Cell;
 	type: PieceType;
 	teamType: TeamType;
+	team: Team;
+	otherTeam: Team;
 
 	sprite: g.Sprite;
+	highlight: g.Sprite;
 
 	constructor(scene: g.Scene, gameCore: GameCore, chessBoard: ChessBoard, props: Props) {
 		this.scene = scene;
@@ -33,124 +40,119 @@ class Piece {
 		this.cell = props.cell;
 		this.type = props.type;
 		this.teamType = props.teamType;
+		this.team = props.team;
+
+		this.otherTeam = this.teamType === TeamType.Black ? this.chessBoard.redTeam : this.chessBoard.blackTeam;
 
 		this.cell.piece = this;
 
 		this.sprite = ViewManager.createPiece(this);
 
 		this.sprite.pointUp.add((event: g.PointUpEvent) => {
-			if (!this.gameCore.started || this.gameCore.ended) return;
-			if (this.gameCore.nico.playerStatus === PlayerStatus.Watcher) return;
-			if (this.gameCore.nico.teamType !== this.teamType) return;
-			if (this.gameCore.nico.currentTeamTurn !== this.teamType) return;
-
-			if (this.chessBoard.pieceShowMove === this) return;
-			
-			let lastPieceMove = this.teamType === TeamType.Black ? this.chessBoard.lastBlackPieceMove : this.chessBoard.lastRedPieceMove;
-			if (lastPieceMove === this) return;
-
-			let turns = this.teamType === TeamType.Black ? this.chessBoard.blackTurns : this.chessBoard.redTurns;
-			if (turns.indexOf(event.player.id) >= 0) return;
-
-			(scene.assets.se as g.AudioAsset).play();
-
-			this.clearMove();
-
-			let cells = Rules.findMove(this, this.chessBoard.cells);
-			cells.forEach((cell) => {
-				this.createMove(this, cell);
-			});
-
-			this.chessBoard.pieceShowMove = this;
+			let playerId = event.player.id;
+			this.showMove(playerId);
 		});
 	}
 
-	clearMove(): void {
-		this.chessBoard.pieceShowMove = null;
-		if (!!this.chessBoard.moveLayer.children) {
-			let i = this.chessBoard.moveLayer.children.length;
-			while (i--) {
-				this.chessBoard.moveLayer.children[i].destroy();
-			}
+	showHighlight(highlightType: HighlightType): void {
+		if (!this.highlight) this.highlight = ViewManager.createHighlight(this, highlightType);
+	}
+
+	hideHighlight(): void {
+		if (!!this.highlight) {
+			if (!this.highlight.destroyed()) this.highlight.destroy();
+			this.highlight = undefined;
 		}
 	}
 
-	createMove(piece: Piece, cell: Cell): void {
-		let move = ViewManager.createMove(piece, cell);
-
-		move.pointUp.add((event: g.PointUpEvent) => {
-			// this.moveTo(cell);
-			g.game.raiseEvent(new g.MessageEvent({
-				message: "PieceMove",
-				pieceIndex: this.chessBoard.pieces.indexOf(this),
-				cellIndex: cell.index
-			}));
-			this.clearMove();
-		});
-	}
-
 	checkMove(playerId: string): boolean {
-		if (!this.gameCore.started || this.gameCore.ended) return false;
-		if (this.gameCore.nico.playerStatus === PlayerStatus.Watcher) return false;
-		if (this.gameCore.nico.teamType !== this.teamType) return false;
-		if (this.gameCore.nico.currentTeamTurn !== this.teamType) return false;
-		
-		let lastPieceMove = this.teamType === TeamType.Black ? this.chessBoard.lastBlackPieceMove : this.chessBoard.lastRedPieceMove;
-		if (lastPieceMove === this) return false;
+		let nico = this.gameCore.nico;
+		if (nico.gameStatus !== GameStatus.Playing) return false;
+		if (!nico.players[playerId] || nico.players[playerId].teamType !== this.teamType) return false;
 
-		let turns = this.teamType === TeamType.Black ? this.chessBoard.blackTurns : this.chessBoard.redTurns;
-		if (turns.indexOf(playerId) >= 0) return false;
+		if (nico.gameMode === GameMode.RealTime) {
+			if (this.team.lastPieceMove === this) return false;
+		}
+		else {
+			if (this.chessBoard.lastPieceMove === this) return false;
+			if (nico.currentPlayerTurn.indexOf(playerId) < 0) return false;
+		}
 
 		return true;
 	}
 
-	moveTo(cell: Cell, playerId: string): void {
+	showMove(playerId: string): void {
+		if (this.chessBoard.pieceShowMove === this || !this.checkMove(playerId)) return;
+
+		(this.scene.assets.se as g.AudioAsset).play();
+
+		this.chessBoard.clearMove();
+		this.chessBoard.pieceShowMove = this;
+		this.showHighlight(HighlightType.Slected);
+
+		let cells = Rules.findMove(this);
+		cells.forEach((cell) => {
+			this.chessBoard.createMove(this, cell);
+		});
+	}
+
+	moveTo(cell: Cell, playerId: string): boolean {
+		if (!this.checkMove(playerId)) return false;
+		if (Rules.findMove(this, cell).length === 0) return false;
+
 		console.log("player " + playerId + " move piece");
-
-		let piece = this;
-
-		if(this.chessBoard.pieceShowMove === this) {
-			this.clearMove();
+		
+		if((this.chessBoard.pieceShowMove === this) || (cell.piece && this.chessBoard.pieceShowMove === cell.piece)) {
+			this.chessBoard.clearMove();
 		}
 
-		if (this.teamType === TeamType.Black) {
-			this.chessBoard.lastBlackPieceMove = this;
-			this.chessBoard.blackTurns.push(playerId);
-			this.gameCore.nico.removePlayerTurn(playerId);
-
-			if (this.chessBoard.blackTurns.length === this.gameCore.nico.blackTeams.length) {
-				this.chessBoard.lastBlackPieceMove = null;
-				this.chessBoard.blackTurns = [];
-				this.gameCore.nico.toggleTurn();
-			}
+		if (this.gameCore.nico.gameMode === GameMode.RealTime) {
+			if (this.team.lastPieceMove) this.team.lastPieceMove.hideHighlight();
+			this.team.lastPieceMove = this;
+			this.showHighlight(!cell.piece ? HighlightType.Move : HighlightType.Eat);
 		}
 		else {
-			this.chessBoard.lastRedPieceMove = this;
-			this.chessBoard.redTurns.push(playerId);
-			this.gameCore.nico.removePlayerTurn(playerId);
+			if (this.chessBoard.lastPieceMove) this.chessBoard.lastPieceMove.hideHighlight();
+			this.chessBoard.lastPieceMove = this;
+			this.showHighlight(!cell.piece ? HighlightType.Move : HighlightType.Eat);
 
-			if (this.chessBoard.redTurns.length === this.gameCore.nico.redTeams.length) {
-				this.chessBoard.lastRedPieceMove = null;
-				this.chessBoard.redTurns = [];
+			this.gameCore.nico.removePlayerTurn(playerId);
+			if (this.gameCore.nico.checkChangeTurn()) {
 				this.gameCore.nico.toggleTurn();
 			}
 		}
-
-		piece.sprite.x = cell.point.x;
-		piece.sprite.y = cell.point.y;
-		piece.sprite.modified();
-
-		if (!!cell.piece) {
+		
+		if (cell.piece) {
 			if (cell.piece.type === PieceType.General) {
-				this.gameCore.endGame();
+				this.gameCore.nico.onGameEnded(this.teamType);
 			}
 
 			cell.piece.destroy();
 		}
 
+		//
+		let piece = this;
+		piece.sprite.x = cell.point.x;
+		piece.sprite.y = cell.point.y;
+		piece.sprite.modified();
+
 		piece.cell.piece = null;
 		cell.piece = piece;
 		piece.cell = cell;
+		
+		if (this.gameCore.nico.gameStatus !== GameStatus.Ended) {
+			let checkmateBlack = this.chessBoard.checkmate(TeamType.Black);
+			let checkmateRed = this.chessBoard.checkmate(TeamType.Red);
+			if (checkmateBlack || checkmateRed) {
+				console.log("Checkmate");
+				this.gameCore.nico.checkmateLabel.show();
+			}
+			else {
+				this.gameCore.nico.checkmateLabel.hide();
+			}
+		}
+
+		return true;
 	}
 
 	destroy(): void {
@@ -158,7 +160,7 @@ class Piece {
 		this.sprite.destroy();
 
 		let index = this.chessBoard.pieces.indexOf(this);
-		this.chessBoard.pieces.splice(index, 1);
+		if (index >= 0) this.chessBoard.pieces.splice(index, 1);
 	}
 
 }

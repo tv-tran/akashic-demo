@@ -9,12 +9,14 @@ const lengthY = 10;
 
 class Rules {
 
-	static findMove(piece: Piece, cells: Cell[][]): Cell[] {
+	static findMove(piece: Piece, target?: Cell): Cell[] {
 		let result: Cell[] = [];
 
 		let pieceType = piece.type;
 		let teamType = piece.teamType;
 		let cell = piece.cell;
+
+		let cells = piece.chessBoard.cells;
 
 		let index0: Index;
 		let index1: Index;
@@ -25,68 +27,64 @@ class Rules {
 				let fuse = false;
 				for (let i = cell.index.i + 1; i < lengthY; i++) {
 					let _cell = cells[i][cell.index.j];
-					if (!fuse) {
-						if (!_cell.piece) {
+					if (this.checkCannonCell(_cell, piece, fuse)) {
+						if (!target) result.push(_cell);
+						else if (_cell === target) {
 							result.push(_cell);
-						} else fuse = true;
-					} else {
-						if (_cell.piece) {
-							if (_cell.piece.teamType !== teamType) {
-								result.push(_cell);
-							}
-							break;
+							return result;
 						}
+					}
+					if (_cell.piece) {
+						if (fuse) break;
+						else fuse = true;
 					}
 				}
 
 				fuse = false;
 				for (let i = cell.index.i - 1; i >= 0; i--) {
 					let _cell = cells[i][cell.index.j];
-					if (!fuse) {
-						if (!_cell.piece) {
+					if (this.checkCannonCell(_cell, piece, fuse)) {
+						if (!target) result.push(_cell);
+						else if (_cell === target) {
 							result.push(_cell);
-						} else fuse = true;
-					} else {
-						if (_cell.piece) {
-							if (_cell.piece.teamType !== teamType) {
-								result.push(_cell);
-							}
-							break;
+							return result;
 						}
+					}
+					if (_cell.piece) {
+						if (fuse) break;
+						else fuse = true;
 					}
 				}
 
 				fuse = false;
 				for (let j = cell.index.j + 1; j < lengthX; j++) {
 					let _cell = cells[cell.index.i][j];
-					if (!fuse) {
-						if (!_cell.piece) {
+					if (this.checkCannonCell(_cell, piece, fuse)) {
+						if (!target) result.push(_cell);
+						else if (_cell === target) {
 							result.push(_cell);
-						} else fuse = true;
-					} else {
-						if (_cell.piece) {
-							if (_cell.piece.teamType !== teamType) {
-								result.push(_cell);
-							}
-							break;
+							return result;
 						}
+					}
+					if (_cell.piece) {
+						if (fuse) break;
+						else fuse = true;
 					}
 				}
 
 				fuse = false;
 				for (let j = cell.index.j - 1; j >= 0; j--) {
 					let _cell = cells[cell.index.i][j];
-					if (!fuse) {
-						if (!_cell.piece) {
+					if (this.checkCannonCell(_cell, piece, fuse)) {
+						if (!target) result.push(_cell);
+						else if (_cell === target) {
 							result.push(_cell);
-						} else fuse = true;
-					} else {
-						if (_cell.piece) {
-							if (_cell.piece.teamType !== teamType) {
-								result.push(_cell);
-							}
-							break;
+							return result;
 						}
+					}
+					if (_cell.piece) {
+						if (fuse) break;
+						else fuse = true;
 					}
 				}
 				break;
@@ -95,41 +93,49 @@ class Rules {
 				for (let i = cell.index.i + 1; i < lengthY; i++) {
 					let _cell = cells[i][cell.index.j];
 					if (this.checkCell(_cell, piece)) {
-						result.push(_cell);
+						if (!target) result.push(_cell);
+						else if (_cell === target) {
+							result.push(_cell);
+							return result;
+						}
 					}
-					if (!!_cell.piece) {
-						break;
-					}
+					if (_cell.piece) break;
 				}
 
 				for (let i = cell.index.i - 1; i >= 0; i--) {
 					let _cell = cells[i][cell.index.j];
 					if (this.checkCell(_cell, piece)) {
-						result.push(_cell);
+						if (!target) result.push(_cell);
+						else if (_cell === target) {
+							result.push(_cell);
+							return result;
+						}
 					}
-					if (!!_cell.piece) {
-						break;
-					}
+					if (_cell.piece) break;
 				}
 
 				for (let j = cell.index.j + 1; j < lengthX; j++) {
 					let _cell = cells[cell.index.i][j];
 					if (this.checkCell(_cell, piece)) {
-						result.push(_cell);
+						if (!target) result.push(_cell);
+						else if (_cell === target) {
+							result.push(_cell);
+							return result;
+						}
 					}
-					if (!!_cell.piece) {
-						break;
-					}
+					if (_cell.piece) break;
 				}
 
 				for (let j = cell.index.j - 1; j >= 0; j--) {
 					let _cell = cells[cell.index.i][j];
 					if (this.checkCell(_cell, piece)) {
-						result.push(_cell);
+						if (!target) result.push(_cell);
+						else if (_cell === target) {
+							result.push(_cell);
+							return result;
+						}
 					}
-					if (!!_cell.piece) {
-						break;
-					}
+					if (_cell.piece) break;
 				}
 				break;
 
@@ -138,20 +144,20 @@ class Rules {
 					i: cell.index.i + (teamType === TeamType.Red ? 1 : -1),
 					j: cell.index.j
 				};
-				this.checkMoveSoldier(piece, cells, result, index1);
+				if (this.checkSoldierCell(piece, cells, result, target, index1)) return result;
 
 				if (this.checkOvercomeRiver(cell.index.i, piece)) {
 					index1 = {
 						i: cell.index.i,
 						j: cell.index.j + 1
 					};
-					this.checkMoveSoldier(piece, cells, result, index1);
+					if (this.checkSoldierCell(piece, cells, result, target, index1)) return result;
 
 					index1 = {
 						i: cell.index.i,
 						j: cell.index.j - 1
 					};
-					this.checkMoveSoldier(piece, cells, result, index1);
+					if (this.checkSoldierCell(piece, cells, result, target, index1)) return result;
 				}
 
 				break;
@@ -169,8 +175,8 @@ class Rules {
 					i: cell.index.i + 2,
 					j: cell.index.j - 1
 				};
-				this.checkMoveHorse(piece, cells, result, index0, index1);
-				this.checkMoveHorse(piece, cells, result, index0, index2);
+				if (this.checkHorseCell(piece, cells, result, target, index0, index1)) return result;
+				if (this.checkHorseCell(piece, cells, result, target, index0, index2)) return result;
 
 				index0 = {
 					i: cell.index.i - 1,
@@ -184,8 +190,8 @@ class Rules {
 					i: cell.index.i - 2,
 					j: cell.index.j - 1
 				};
-				this.checkMoveHorse(piece, cells, result, index0, index1);
-				this.checkMoveHorse(piece, cells, result, index0, index2);
+				if (this.checkHorseCell(piece, cells, result, target, index0, index1)) return result;
+				if (this.checkHorseCell(piece, cells, result, target, index0, index2)) return result;
 
 				index0 = {
 					i: cell.index.i,
@@ -199,8 +205,8 @@ class Rules {
 					i: cell.index.i - 1,
 					j: cell.index.j + 2
 				};
-				this.checkMoveHorse(piece, cells, result, index0, index1);
-				this.checkMoveHorse(piece, cells, result, index0, index2);
+				if (this.checkHorseCell(piece, cells, result, target, index0, index1)) return result;
+				if (this.checkHorseCell(piece, cells, result, target, index0, index2)) return result;
 
 				index0 = {
 					i: cell.index.i,
@@ -214,8 +220,8 @@ class Rules {
 					i: cell.index.i - 1,
 					j: cell.index.j - 2
 				};
-				this.checkMoveHorse(piece, cells, result, index0, index1);
-				this.checkMoveHorse(piece, cells, result, index0, index2);
+				if (this.checkHorseCell(piece, cells, result, target, index0, index1)) return result;
+				if (this.checkHorseCell(piece, cells, result, target, index0, index2)) return result;
 				break;
 
 			case PieceType.Elephant:
@@ -227,7 +233,7 @@ class Rules {
 					i: cell.index.i + 2,
 					j: cell.index.j + 2
 				};
-				this.checkMoveElephant(piece, cells, result, index0, index1);
+				if (this.checkElephantCell(piece, cells, result, target, index0, index1)) return result;
 
 				index0 = {
 					i: cell.index.i + 1,
@@ -237,7 +243,7 @@ class Rules {
 					i: cell.index.i + 2,
 					j: cell.index.j - 2
 				};
-				this.checkMoveElephant(piece, cells, result, index0, index1);
+				if (this.checkElephantCell(piece, cells, result, target, index0, index1)) return result;
 
 				index0 = {
 					i: cell.index.i - 1,
@@ -247,7 +253,7 @@ class Rules {
 					i: cell.index.i - 2,
 					j: cell.index.j + 2
 				};
-				this.checkMoveElephant(piece, cells, result, index0, index1);
+				if (this.checkElephantCell(piece, cells, result, target, index0, index1)) return result;
 
 				index0 = {
 					i: cell.index.i - 1,
@@ -257,7 +263,8 @@ class Rules {
 					i: cell.index.i - 2,
 					j: cell.index.j - 2
 				};
-				this.checkMoveElephant(piece, cells, result, index0, index1);
+				if (this.checkElephantCell(piece, cells, result, target, index0, index1)) return result;
+
 				break;
 
 			case PieceType.Advisor:
@@ -265,22 +272,26 @@ class Rules {
 					i: cell.index.i + 1,
 					j: cell.index.j + 1
 				};
-				this.checkMoveAdvisor(piece, cells, result, index1);
+				if (this.checkAdvisorCell(piece, cells, result, target, index1)) return result;
+
 				index1 = {
 					i: cell.index.i + 1,
 					j: cell.index.j - 1
 				};
-				this.checkMoveAdvisor(piece, cells, result, index1);
+				if (this.checkAdvisorCell(piece, cells, result, target, index1)) return result;
+
 				index1 = {
 					i: cell.index.i - 1,
 					j: cell.index.j + 1
 				};
-				this.checkMoveAdvisor(piece, cells, result, index1);
+				if (this.checkAdvisorCell(piece, cells, result, target, index1)) return result;
+
 				index1 = {
 					i: cell.index.i - 1,
 					j: cell.index.j - 1
 				};
-				this.checkMoveAdvisor(piece, cells, result, index1);
+				if (this.checkAdvisorCell(piece, cells, result, target, index1)) return result;
+
 				break;
 
 			case PieceType.General:
@@ -288,34 +299,35 @@ class Rules {
 					i: cell.index.i + 1,
 					j: cell.index.j
 				};
-				this.checkMoveAdvisor(piece, cells, result, index1);
+				if (this.checkAdvisorCell(piece, cells, result, target, index1)) return result;
 
 				index1 = {
 					i: cell.index.i - 1,
 					j: cell.index.j
 				};
-				this.checkMoveAdvisor(piece, cells, result, index1);
+				if (this.checkAdvisorCell(piece, cells, result, target, index1)) return result;
 
 				index1 = {
 					i: cell.index.i,
 					j: cell.index.j + 1
 				};
-				this.checkMoveAdvisor(piece, cells, result, index1);
+				if (this.checkAdvisorCell(piece, cells, result, target, index1)) return result;
 
 				index1 = {
 					i: cell.index.i,
 					j: cell.index.j - 1
 				};
-				this.checkMoveAdvisor(piece, cells, result, index1);
+				if (this.checkAdvisorCell(piece, cells, result, target, index1)) return result;
 
 				//
-				let cell0 = piece.chessBoard.redGeneral.cell;
-				let cell1 = piece.chessBoard.blackGeneral.cell;
+				let cell0 = piece.chessBoard.redTeam.general.cell;
+				let cell1 = piece.chessBoard.blackTeam.general.cell;
 				if (this.checkRevealGenerals(cell0, cell1, cells)) {
-					if (teamType === TeamType.Red) {
-						result.push(cell1);
-					} else {
-						result.push(cell0);
+					let _cell = teamType === TeamType.Black ? cell0 : cell1;
+					if (!target) result.push(_cell);
+					else if (_cell === target) {
+						result.push(_cell);
+						return result;
 					}
 				}
 
@@ -325,6 +337,7 @@ class Rules {
 		return result;
 	}
 
+	//
 	static checkRevealGenerals(cell0: Cell, cell1: Cell, cells: Cell[][]): boolean {
 		let b = cell0.index.j === cell1.index.j;
 		if (b) {
@@ -339,59 +352,83 @@ class Rules {
 	}
 
 	//
-	static checkMoveHorse(piece: Piece, cells: Cell[][], result: Cell[], index0: Index, index: Index): void {
+	static checkCell(cell: Cell, piece: Piece): boolean {
+		return !cell.piece || cell.piece.teamType !== piece.teamType;
+	}
+
+	static checkCannonCell(cell: Cell, piece: Piece, fuse: boolean): boolean {
+		return (!fuse && !cell.piece) || (fuse && cell.piece && cell.piece.teamType !== piece.teamType);
+	}
+
+	//
+	static checkHorseCell(piece: Piece, cells: Cell[][], result: Cell[], target: Cell, index0: Index, index: Index): boolean {
 		if (this.checkIndex(index0) && this.checkIndex(index)) {
 			let cell0 = cells[index0.i][index0.j];
 			let cell = cells[index.i][index.j];
 			if (!cell0.piece && this.checkCell(cell, piece)) {
-				result.push(cell);
+				if (!target) result.push(cell);
+				else if (cell === target) {
+					result.push(cell);
+					return true;
+				}
 			}
 		}
+		return false;
 	}
 
-	static checkMoveElephant(piece: Piece, cells: Cell[][], result: Cell[], index0: Index, index: Index): void {
+	static checkElephantCell(piece: Piece, cells: Cell[][], result: Cell[], target: Cell, index0: Index, index: Index): boolean {
 		if (this.checkIndex(index0) && this.checkIndex(index) && !this.checkOvercomeRiver(index.i, piece)) {
 			let cell0 = cells[index0.i][index0.j];
 			let cell = cells[index.i][index.j];
 			if (!cell0.piece && this.checkCell(cell, piece)) {
-				result.push(cell);
+				if (!target) result.push(cell);
+				else if (cell === target) {
+					result.push(cell);
+					return true;
+				}
 			}
 		}
+		return false;
 	}
 
-	static checkMoveAdvisor(piece: Piece, cells: Cell[][], result: Cell[], index: Index): void {
+	static checkAdvisorCell(piece: Piece, cells: Cell[][], result: Cell[], target: Cell, index: Index): boolean {
 		if (this.checkAdvisorIndex(index, piece)) {
 			let cell = cells[index.i][index.j];
 			if (this.checkCell(cell, piece)) {
-				result.push(cell);
+				if (!target) result.push(cell);
+				else if (cell === target) {
+					result.push(cell);
+					return true;
+				}
 			}
 		}
+		return false;
 	}
 
-	static checkMoveSoldier(piece: Piece, cells: Cell[][], result: Cell[], index: Index): void {
+	static checkSoldierCell(piece: Piece, cells: Cell[][], result: Cell[], target: Cell, index: Index): boolean {
 		if (this.checkIndex(index)) {
 			let cell = cells[index.i][index.j];
 			if (this.checkCell(cell, piece)) {
-				result.push(cell);
+				if (!target) result.push(cell);
+				else if (cell === target) {
+					result.push(cell);
+					return true;
+				}
 			}
 		}
+		return false;
 	}
 
 	//
-	static checkCell(cell: Cell, piece: Piece): boolean {
-		return !cell.piece || cell.piece.teamType !== piece.teamType;
+	static checkAdvisorIndex(index: Index, piece: Piece): boolean {
+		return (index.j >= 3 && index.j <= 5
+		&& (piece.teamType === TeamType.Red ? index.i >= 0 && index.i <= 2 : index.i >= 7 && index.i <= 9));
 	}
 
 	static checkOvercomeRiver(indexI: number, piece: Piece): boolean {
 		return piece.teamType === TeamType.Red ? indexI > 4 : indexI < 5;
 	}
 
-	static checkAdvisorIndex(index: Index, piece: Piece): boolean {
-		return (index.j >= 3 && index.j <= 5
-		&& (piece.teamType === TeamType.Red ? index.i >= 0 && index.i <= 2 : index.i >= 7 && index.i <= 9));
-	}
-
-	//
 	static checkIndex(index: Index): boolean {
 		return this.checkIndexIJ(index.i, index.j);
 	}

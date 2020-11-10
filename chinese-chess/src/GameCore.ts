@@ -13,13 +13,8 @@ class GameCore {
 	infoLayer: g.E;
 	panelLayer: g.E;
 
-	started: boolean;
-	ended: boolean;
-
 	constructor(scene: g.Scene) {
 		this.scene = scene;
-		this.ended = false;
-		this.started = false;
 
 		this.center = {
 			x: g.game.width/2,
@@ -42,29 +37,15 @@ class GameCore {
 		});
 
 		this.chessboard = new ChessBoard(scene, this);
-
-		this.nico = new Nico(scene, this);
 		
+		this.nico = new Nico(scene, this);
+
 		this.scene.message.add(ev => {
-			if (ev.data.message === "PieceMove") {
-				let piece = this.chessboard.pieces[ev.data.pieceIndex];
-				let cell = this.chessboard.cells[ev.data.cellIndex.i][ev.data.cellIndex.j];
-				piece.moveTo(cell, ev.player.id);
-			}
+			this.chessboard.handleMesssge(ev);
 		});
 	}
 
-	endGame(): void {
-		if (this.ended) return;
-		this.ended = true;
-
-		this.nico.onGameEnded();
-	}
-
 	remake(): void {
-		this.ended = false;
-		this.started = false;
-
 		// this.chessboard.destroy();
 		// this.chessboard = new ChessBoard(this.scene, this);
 		this.chessboard.remake();

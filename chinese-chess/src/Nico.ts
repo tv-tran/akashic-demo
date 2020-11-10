@@ -1,8 +1,10 @@
 import { Label } from "@akashic-extension/akashic-label";
+import GameMode = require("./enum/GameMode");
 import GameStatus = require("./enum/GameStatus");
 import PlayerStatus = require("./enum/PlayerStatus");
 import TeamType = require("./enum/TeamType");
 import GameCore = require("./GameCore");
+import Player = require("./Player");
 
 class Nico {
 	scene: g.Scene;
@@ -10,14 +12,16 @@ class Nico {
 	gameMasterId: string;
 
 	gameStatus: GameStatus;
-	playerStatus: PlayerStatus;
+	gameMode: GameMode;
+	myPlayer: Player;
 
-	players: string[];
+	players: {[key: string]: Player};
+	playersID: string[];
 	blackTeams: string[];
 	redTeams: string[];
 
 	currentTeamTurn: TeamType;
-	teamType: TeamType;
+	currentPlayerTurn: string[];
 
 	//
 	leftLayout: g.E;
@@ -31,14 +35,20 @@ class Nico {
 	redTeamLabel: Label;
 	blackTeamLabel: Label;
 	infoLabel: Label;
+	checkmateLabel: Label;
+	gameModeLabel: Label;
+	teamWinLabel: Label;
 
 	closeButton: g.FilledRect;
 	entryButton: g.FilledRect;
 	remakeButton: g.FilledRect;
+	changeButton: g.FilledRect;
 
 	constructor(scene: g.Scene, gameCore: GameCore) {
 		this.scene = scene;
 		this.gameCore = gameCore;
+
+		this.gameMode = GameMode.RealTime;
 
 		this.createUI(scene, gameCore);
 
@@ -60,9 +70,30 @@ class Nico {
 			if (ev.data.message === "Remake") {
 				this.onRemake();
 			}
+
+			if (ev.data.message === "ChangeMode") {
+				if (this.gameMode !== GameMode.RealTime) {
+					this.gameMode = GameMode.RealTime;
+					this.gameModeLabel.text = "Game Mode: Realtime";
+					this.gameModeLabel.invalidate();
+				}
+				else {
+					this.gameMode = GameMode.Turn;
+					this.gameModeLabel.text = "Game Mode: Turn";
+					this.gameModeLabel.invalidate();
+				}
+			}
+		});
+
+		this.changeButton.pointUp.add(() => {
+			g.game.raiseEvent(new g.MessageEvent({ message: "ChangeMode" }));
 		});
 
 		this.closeButton.pointUp.add(() => {
+			if (this.playersID.length < 2) {
+				alert("The game requires a minimum of 2 players to start !");
+				return;
+			}
 			this.closeButton.remove();
 			g.game.raiseEvent(new g.MessageEvent({ message: "EntryClosed" }));
 		});
@@ -139,6 +170,28 @@ class Nico {
 			parent: this.rightLayout
 		});
 
+		this.checkmateLabel = new Label({
+			scene: scene,
+			width: width - 16,
+			font: dfont,
+			fontSize: 14,
+			text: "Checkmate",
+			x: 8,
+			y: 180,
+			parent: this.rightLayout
+		});
+
+		this.teamWinLabel = new Label({
+			scene: scene,
+			width: width - 16,
+			font: dfont,
+			fontSize: 14,
+			text: "",
+			x: 8,
+			y: g.game.height / 2,
+			parent: this.rightLayout
+		});
+
 		this.currentTeamTurnLabel = new Label({
 			scene: scene,
 			width: width - 16,
@@ -181,6 +234,28 @@ class Nico {
 			x: 8,
 			y: 288,
 			parent: this.leftLayout
+		});
+
+		this.gameModeLabel = new Label({
+			scene: scene,
+			width: width - 16,
+			font: dfont,
+			fontSize: 14,
+			text: "Game Mode: Realtime",
+			x: 8,
+			y: g.game.height - 170,
+			parent: this.leftLayout
+		});
+
+		this.changeButton = this.createButton({
+			scene: scene,
+			width: 60,
+			height: 30,
+			fontSize: 14,
+			font: dfont,
+			text: "Change",
+			x: 200,
+			y: g.game.height - 160
 		});
 
 		this.closeButton = this.createButton({
@@ -273,54 +348,76 @@ class Nico {
 		console.log("onGameCreate");
 
 		this.gameStatus = GameStatus.GameMasterWaiting;
+		this.myPlayer = new Player(g.game.selfId, PlayerStatus.Watcher, -1);
+
+		this.players = {};
+		this.playersID = [];
+		this.blackTeams = [];
+		this.redTeams = [];
+
+		this.currentTeamTurn = -1;
+		this.currentPlayerTurn = [];
+
 		this.gameStatusLabel.text = "Game Status: GameMasterWaiting";
 		this.gameStatusLabel.invalidate();
 
-		this.playerStatus = PlayerStatus.Watcher;
 		this.playerStatusLabel.text = "Player Status: Watcher";
 		this.playerStatusLabel.invalidate();
 
 		this.infoLabel.text = "Game Master Waiting !";
-		this.teamTypeLabel.text = "";
-		this.currentTeamTurnLabel.text = "";
-		this.currentPlayerTurnLabel.text = "";
-		this.blackTeamLabel.text = "Black Teams: ";
-		this.redTeamLabel.text = "Red Teams: ";
 		this.infoLabel.invalidate();
+
+		this.teamTypeLabel.text = "";
 		this.teamTypeLabel.invalidate();
-		this.blackTeamLabel.invalidate();
-		this.redTeamLabel.invalidate();
+
+		this.teamWinLabel.text = "";
+		this.teamWinLabel.invalidate();
+
+		this.currentTeamTurnLabel.text = "";
 		this.currentTeamTurnLabel.invalidate();
+
+		this.currentPlayerTurnLabel.text = "";
 		this.currentPlayerTurnLabel.invalidate();
 
-		this.players = [];
-		this.blackTeams = [];
-		this.redTeams = [];
-		this.currentTeamTurn = -1;
-		this.teamType = -1;
+		this.blackTeamLabel.text = "Black Teams: ";
+		this.blackTeamLabel.invalidate();
+
+		this.redTeamLabel.text = "Red Teams: ";
+		this.redTeamLabel.invalidate();
+
+		this.checkmateLabel.hide();
+		this.gameModeLabel.hide();
+	}
+
+	checkChangeTurn(): boolean {
+		return this.currentPlayerTurn.length === 0;
 	}
 
 	toggleTurn(): void {
-		if (this.currentTeamTurn === TeamType.Black) {
-			this.currentTeamTurn = TeamType.Red;
-
-			this.currentTeamTurnLabel.text = "Team Turn: Red";
-			this.currentTeamTurnLabel.invalidate();
-
-			this.currentPlayerTurnLabel.text = "Player Turn: ";
-			this.redTeams.forEach((playerId) => {
-				this.currentPlayerTurnLabel.text += "player" + playerId + ", "
-			});
-			this.currentPlayerTurnLabel.invalidate();
-		}
-		else {
+		if (this.currentTeamTurn === TeamType.Red || this.currentTeamTurn === -1) {
 			this.currentTeamTurn = TeamType.Black;
 
 			this.currentTeamTurnLabel.text = "Team Turn: Black";
 			this.currentTeamTurnLabel.invalidate();
 
+			this.currentPlayerTurn = [];
 			this.currentPlayerTurnLabel.text = "Player Turn: ";
 			this.blackTeams.forEach((playerId) => {
+				this.currentPlayerTurn.push(playerId);
+				this.currentPlayerTurnLabel.text += "player" + playerId + ", "
+			});
+			this.currentPlayerTurnLabel.invalidate();
+		}
+		else {
+			this.currentTeamTurn = TeamType.Red;
+
+			this.currentTeamTurnLabel.text = "Team Turn: Red";
+			this.currentTeamTurnLabel.invalidate();
+
+			this.currentPlayerTurn = [];
+			this.currentPlayerTurnLabel.text = "Player Turn: ";
+			this.redTeams.forEach((playerId) => {
+				this.currentPlayerTurn.push(playerId);
 				this.currentPlayerTurnLabel.text += "player" + playerId + ", "
 			});
 			this.currentPlayerTurnLabel.invalidate();
@@ -328,7 +425,14 @@ class Nico {
 	}
 
 	removePlayerTurn(playerId: string): void {
-		let index = this.currentPlayerTurnLabel.text.indexOf("player" + playerId);
+		let index: number;
+
+		index = this.currentPlayerTurn.indexOf(playerId);
+		if (index >= 0) {
+			this.currentPlayerTurn.splice(index, 1);
+		}
+
+		index = this.currentPlayerTurnLabel.text.indexOf("player" + playerId);
 		if (index >= 0) {
 			let index2 = this.currentPlayerTurnLabel.text.indexOf(",", index);
 			this.currentPlayerTurnLabel.text = this.currentPlayerTurnLabel.text.substring(0, index)
@@ -345,8 +449,11 @@ class Nico {
 		this.gameStatusLabel.text = "Game Status: Initializing";
 		this.gameStatusLabel.invalidate();
 
-		if (g.game.selfId === this.gameMasterId) {
+		this.gameModeLabel.show();
+
+		if (this.gameMasterId === this.myPlayer.id) {
 			this.rightLayout.append(this.closeButton);
+			this.leftLayout.append(this.changeButton);
 		  	this.infoLabel.text =
 			"You joined first. You are a broadcaster\nYou can close the reception of participants";
 			this.infoLabel.invalidate();
@@ -362,10 +469,12 @@ class Nico {
 	onPlayerArrive(playerId: string): void {
 		console.log("onPlayerArrive " + playerId);
 
-		if (this.players.indexOf(playerId) < 0) {
-			this.players.push(playerId);
-
-			let teamType = this.players.length % 2 === 1 ? TeamType.Black : TeamType.Red;
+		if (this.playersID.indexOf(playerId) < 0) {
+			this.playersID.push(playerId);
+			let playerStatus = playerId === this.gameMasterId ? PlayerStatus.Master : PlayerStatus.Player;
+			let teamType = this.playersID.length % 2 === 1 ? TeamType.Black : TeamType.Red;
+			let player = new Player(playerId, playerStatus, teamType)
+			this.players[playerId] = player;
 			
 			if (teamType === TeamType.Black) {
 				this.blackTeams.push(playerId);
@@ -378,13 +487,13 @@ class Nico {
 			teamLabel.text += "player" + playerId + ", ";
 			teamLabel.invalidate();
 
-			if (playerId === g.game.selfId) {
+			if (playerId === this.myPlayer.id) {
+				this.myPlayer = player;
+
 				if (playerId === this.gameMasterId) {
-					this.playerStatus = PlayerStatus.Master;
 					this.playerStatusLabel.text = "Player Status: Master";
 					this.playerStatusLabel.invalidate();
 				} else {
-					this.playerStatus = PlayerStatus.Player;
 					this.playerStatusLabel.text = "Player Status: Player";
 					this.playerStatusLabel.invalidate();
 
@@ -392,8 +501,7 @@ class Nico {
 					this.infoLabel.invalidate();
 				}
 
-				this.teamType = teamType;
-				this.teamTypeLabel.text = "My Team: " + (this.teamType === TeamType.Black ? "Black" : "Red");
+				this.teamTypeLabel.text = "My Team: " + (teamType === TeamType.Black ? "Black" : "Red");
 				this.teamTypeLabel.invalidate();
 
 				this.gameCore.chessboard.flip();
@@ -403,31 +511,30 @@ class Nico {
 
 	onGameStarted(): void {
 		console.log("onGameStarted");
-
 		this.gameStatus = GameStatus.Playing;
+		this.toggleTurn();
+
 		this.gameStatusLabel.text = "Game Status: Playing";
 		this.gameStatusLabel.invalidate();
-
-		this.currentTeamTurn = TeamType.Black;
-		this.currentTeamTurnLabel.text = "Team Turn: Black";
-		this.currentTeamTurnLabel.invalidate();
-
-		this.currentPlayerTurnLabel.text = "Player Turn: ";
-		this.blackTeams.forEach((playerId) => {
-			this.currentPlayerTurnLabel.text += "player" + playerId + ", "
-		});
-		this.currentPlayerTurnLabel.invalidate();
 
 		this.infoLabel.text = "Game started !";
 		this.infoLabel.invalidate();
 
+		if (this.gameMode === GameMode.RealTime) {
+			this.currentTeamTurnLabel.hide();
+			this.currentPlayerTurnLabel.hide();
+		}
+		else {
+			this.currentTeamTurnLabel.show();
+			this.currentPlayerTurnLabel.show();
+		}
+
 		if (this.closeButton.parent) this.closeButton.remove();
 		if (this.entryButton.parent) this.entryButton.remove();
-
-		this.gameCore.started = true;
+		if (this.changeButton.parent) this.changeButton.remove();
 	}
 
-	onGameEnded(): void {
+	onGameEnded(teamType: TeamType): void {
 		console.log("onGameEnded");
 
 		this.gameStatus = GameStatus.Ended;
@@ -440,8 +547,13 @@ class Nico {
 		this.currentPlayerTurnLabel.text = "";
 		this.currentPlayerTurnLabel.invalidate();
 
+		this.teamWinLabel.text = "Team Win: " + (teamType === TeamType.Black ? "Black" : "Red");
+		this.teamWinLabel.invalidate();
+
 		this.infoLabel.text = "Game ended !";
 		this.infoLabel.invalidate();
+
+		this.checkmateLabel.hide();
 
 		if (g.game.selfId === this.gameMasterId) {
 			this.rightLayout.append(this.remakeButton);

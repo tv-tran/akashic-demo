@@ -106,6 +106,12 @@
 			"height": 75,
 			"path": "image/red_soldier.png"
 		},
+		"highlight": {
+			"type": "image",
+			"width": 72,
+			"height": 75,
+			"path": "image/highlight.png"
+		},
 		"move0": {
 			"type": "image",
 			"width": 72,
@@ -202,6 +208,21 @@
 		"Nico": {
 			"type": "script",
 			"path": "script/Nico.js",
+			"global": true
+		},
+		"Team": {
+			"type": "script",
+			"path": "script/Team.js",
+			"global": true
+		},
+		"HighlightType": {
+			"type": "script",
+			"path": "script/enum/HighlightType.js",
+			"global": true
+		},
+		"GameMode": {
+			"type": "script",
+			"path": "script/enum/GameMode.js",
 			"global": true
 		}
 	},

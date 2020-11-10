@@ -1,3 +1,4 @@
+import HighlightType = require("./enum/HighlightType");
 import PieceType = require("./enum/PieceType");
 import TeamType = require("./enum/TeamType");
 import GameCore = require("./GameCore");
@@ -45,11 +46,11 @@ class ViewManager {
 		}));
 	}
 
-	static createMove(piece: Piece, cell: Cell): g.Sprite {
-		let img = piece.scene.assets[!cell.piece ? "move0" : "move1"] as g.ImageAsset;
+	static createMove(scene: g.Scene, parent: g.E, cell: Cell): g.Sprite {
+		let img = scene.assets[!cell.piece ? "move0" : "move1"] as g.ImageAsset;
 
 		return (new g.Sprite({
-			scene: piece.scene,
+			scene: scene,
 			src: img,
 			width: img.width,
 			height: img.height,
@@ -60,7 +61,25 @@ class ViewManager {
 			y: cell.point.y,
 			touchable: true,
 			local: true,
-			parent: piece.chessBoard.moveLayer
+			parent: parent
+		}));
+	}
+
+	static createHighlight(piece: Piece, highlightType: HighlightType): g.Sprite {
+		let id = highlightType === HighlightType.Slected ? "highlight" 
+				: highlightType === HighlightType.Move ? "move0" : "move1";
+		let img = piece.scene.assets[id] as g.ImageAsset;
+
+		return (new g.Sprite({
+			scene: piece.scene,
+			src: img,
+			width: img.width,
+			height: img.height,
+			opacity: .3,
+			x: 0,
+			y: 0,
+			local: true,
+			parent: piece.sprite
 		}));
 	}
 
